@@ -3,25 +3,69 @@ package com.mv.sulworkcafe.service;
 import com.mv.sulworkcafe.dto.CoffeeEventDTO;
 import com.mv.sulworkcafe.entity.CoffeeEvent;
 import com.mv.sulworkcafe.exception.BusinessException;
+import com.mv.sulworkcafe.exception.NotFoundException;
 import com.mv.sulworkcafe.repository.jpa.CoffeeEventRepository;
 import com.mv.sulworkcafe.repository.nativequery.CoffeeEventNativeRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.Comparator;
+import java.util.List;
 
 @Service
 public class EventService {
-    private final CoffeeEventRepository repo;
-    private final CoffeeEventNativeRepository nativeRepo;
-    public EventService(CoffeeEventRepository r, CoffeeEventNativeRepository n){ this.repo=r; this.nativeRepo=n; }
 
+    private final CoffeeEventRepository jpaRepo;
+    private final CoffeeEventNativeRepository nativeRepo;
+
+    public EventService(CoffeeEventRepository jpaRepo,
+                        CoffeeEventNativeRepository nativeRepo) {
+        this.jpaRepo = jpaRepo;
+        this.nativeRepo = nativeRepo;
+    }
 
     @Transactional
-    public CoffeeEvent create(CoffeeEventDTO dto){
+    public CoffeeEvent create(CoffeeEventDTO dto) {
+        if (dto == null || dto.eventDate() == null) {
+            throw new BusinessException("Data do evento é obrigatória");
+        }
         LocalDate d = dto.eventDate();
-        if (!d.isAfter(LocalDate.now())) throw new BusinessException("Data do café deve ser maior que a data atual");
-        repo.findByEventDate(d).ifPresent(e -> { throw new BusinessException("Já existe café nessa data"); });
+        if (!d.isAfter(LocalDate.now())) {
+            throw new BusinessException("A data do café deve ser maior que a data atual");
+        }
+        if (jpaRepo.findByEventDate(d).isPresent()) {
+            throw new BusinessException("Já existe um café nesta data");
+        }
         return nativeRepo.insert(d);
+    }
+
+    @Transactional(readOnly = true)
+    public List<CoffeeEventDTO> listAll() {
+        return jpaRepo.findAll().stream()
+                .sorted(Comparator.comparing(CoffeeEvent::getEventDate))
+                .map(e -> new CoffeeEventDTO(e.getEventDate()))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public CoffeeEventDTO findByDate(LocalDate date) {
+        var e = jpaRepo.findByEventDate(date)
+                .orElseThrow(() -> new NotFoundException("Data do café não encontrada: " + date));
+        return new CoffeeEventDTO(e.getEventDate());
+    }
+
+    @Transactional
+    public void delete(long id) {
+        if (!jpaRepo.existsById(id)) {
+            throw new NotFoundException("Evento não encontrado");
+        }
+        jpaRepo.deleteById(id);
+    }
+
+    @Transactional(readOnly = true)
+    public CoffeeEvent getEntityByDate(LocalDate date) {
+        return jpaRepo.findByEventDate(date)
+                .orElseThrow(() -> new NotFoundException("Data do café não encontrada: " + date));
     }
 }

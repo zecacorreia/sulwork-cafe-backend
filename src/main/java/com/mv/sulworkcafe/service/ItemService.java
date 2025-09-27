@@ -2,10 +2,8 @@ package com.mv.sulworkcafe.service;
 
 import com.mv.sulworkcafe.dto.CoffeeItemCreateDTO;
 import com.mv.sulworkcafe.dto.CoffeeItemDTO;
-import com.mv.sulworkcafe.dto.MarkItemDTO;
 import com.mv.sulworkcafe.entity.CoffeeEvent;
 import com.mv.sulworkcafe.entity.CoffeeItem;
-import com.mv.sulworkcafe.exception.BusinessException;
 import com.mv.sulworkcafe.exception.NotFoundException;
 import com.mv.sulworkcafe.repository.jpa.CoffeeEventRepository;
 import com.mv.sulworkcafe.repository.jpa.CollaboratorRepository;
@@ -18,6 +16,7 @@ import java.util.List;
 
 @Service
 public class ItemService {
+
     private final CoffeeEventRepository eventRepo;
     private final CollaboratorRepository collabRepo;
     private final CoffeeItemNativeRepository nativeRepo;
@@ -40,7 +39,6 @@ public class ItemService {
                 .orElseThrow(() -> new NotFoundException("Colaborador não encontrado para o CPF informado"));
 
         CoffeeItem item = nativeRepo.insert(event.getId(), collaborator.getId(), dto.itemName().trim());
-
         return toDTO(item);
     }
 
@@ -55,6 +53,14 @@ public class ItemService {
         return nativeRepo.listByDate(date).stream().map(this::toDTO).toList();
     }
 
+    @Transactional
+    public void delete(long id) {
+        var deleted = nativeRepo.deleteByIdReturning(id);
+        if (deleted.isEmpty()) {
+            throw new NotFoundException("Item não encontrado");
+        }
+    }
+
     private CoffeeItemDTO toDTO(CoffeeItem i) {
         return new CoffeeItemDTO(
                 i.getId(),
@@ -66,4 +72,3 @@ public class ItemService {
         );
     }
 }
-
