@@ -38,7 +38,7 @@ public class CollaboratorController {
 
     @Operation(summary = "Excluir colaborador por ID")
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(@PathVariable long id) {
+    public ResponseEntity<?> delete(@PathVariable("id") long id) {
         service.delete(id);
         return ResponseEntity.noContent().build();
     }

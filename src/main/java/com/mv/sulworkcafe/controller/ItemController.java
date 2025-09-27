@@ -9,6 +9,12 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.format.annotation.DateTimeFormat;
+
+import static org.springframework.format.annotation.DateTimeFormat.ISO;
+
+import java.time.LocalDate;
+import java.util.List;
 
 @Tag(name = "Items")
 @RestController
@@ -29,19 +35,19 @@ public class ItemController {
 
     @Operation(summary = "Listar itens por data do evento (YYYY-MM-DD)")
     @GetMapping("/by-date/{date}")
-    public java.util.List<CoffeeItemDTO> listByDate(@PathVariable @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate date) {
+    public List<CoffeeItemDTO> listByDate(@PathVariable("date") @DateTimeFormat(iso = ISO.DATE) LocalDate date) {
         return service.listByDate(date);
     }
 
     @Operation(summary = "Marcar se o colaborador trouxe ou não a opção")
     @PatchMapping("/{id}/mark")
-    public CoffeeItemDTO mark(@PathVariable long id, @Valid @RequestBody MarkItemDTO dto) {
+    public CoffeeItemDTO mark(@PathVariable("id") long id, @Valid @RequestBody MarkItemDTO dto) {
         return service.mark(id, dto.brought());
     }
 
     @Operation(summary = "Excluir item por ID")
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(@PathVariable long id) {
+    public ResponseEntity<?> delete(@PathVariable("id") long id) {
         service.delete(id);
         return ResponseEntity.noContent().build();
     }

@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class OpenApiConfig {
     @Bean
-    public OpenAPI api() {
+    public OpenAPI apiInfo() {
         return new OpenAPI().info(new Info().title("Sulwork Café API").version("v1"));
     }
 }
