@@ -22,5 +22,3 @@ server:
 springdoc:
   swagger-ui.path: /swagger
   api-docs.path: /v3/api-docs
-  packages-to-scan: com.mv.sulworkcafe.controller
-  paths-to-match: /api/**

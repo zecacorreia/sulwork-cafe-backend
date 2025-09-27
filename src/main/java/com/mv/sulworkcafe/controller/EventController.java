@@ -9,7 +9,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
-import java.time.LocalDate;
 import java.util.List;
 
 @Tag(name = "Events")
@@ -39,9 +38,10 @@ public class EventController {
 
     @Operation(summary = "Buscar evento por data (YYYY-MM-DD)")
     @GetMapping("/{date}")
-    public CoffeeEventDTO findByDate(@PathVariable LocalDate date) {
-        return service.findByDate(date);
+    public CoffeeEventDTO findByDate(@PathVariable @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate date) {
+    return service.findByDate(date);
     }
+
 
     @Operation(summary = "Excluir evento por ID")
     @DeleteMapping("/{id}")

@@ -10,9 +10,6 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
-import java.util.List;
-
 @Tag(name = "Items")
 @RestController
 @RequestMapping("/api/items")
@@ -32,7 +29,7 @@ public class ItemController {
 
     @Operation(summary = "Listar itens por data do evento (YYYY-MM-DD)")
     @GetMapping("/by-date/{date}")
-    public List<CoffeeItemDTO> listByDate(@PathVariable LocalDate date) {
+    public java.util.List<CoffeeItemDTO> listByDate(@PathVariable @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate date) {
         return service.listByDate(date);
     }
 
