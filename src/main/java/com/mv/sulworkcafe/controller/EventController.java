@@ -28,11 +28,13 @@ public class EventController {
 
     @Operation(summary = "Criar evento de café (data futura)")
     @PostMapping
-    public ResponseEntity<?> create(@Valid @RequestBody CoffeeEventDTO dto) {
+    public ResponseEntity<CoffeeEventDTO> create(@Valid @RequestBody CoffeeEventDTO dto) {
         var saved = service.create(dto);
+        var body = new CoffeeEventDTO(saved.getEventDate());
         return ResponseEntity.created(URI.create("/api/events/" + saved.getId()))
-                .body(saved);
+                .body(body);
     }
+
 
     @Operation(summary = "Listar eventos (futuros primeiro)")
     @GetMapping

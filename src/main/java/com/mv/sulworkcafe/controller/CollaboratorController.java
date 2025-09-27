@@ -24,11 +24,13 @@ public class CollaboratorController {
 
     @Operation(summary = "Cadastrar colaborador")
     @PostMapping
-    public ResponseEntity<?> create(@Valid @RequestBody CollaboratorDTO dto) {
-        var saved = service.create(dto);
+    public ResponseEntity<CollaboratorDTO> create(@Valid @RequestBody CollaboratorDTO dto) {
+        var saved = service.create(dto); 
+        var body = new CollaboratorDTO(saved.getName(), saved.getCpf());
         return ResponseEntity.created(URI.create("/api/collaborators/" + saved.getId()))
-                .body(saved);
+                .body(body);
     }
+
 
     @Operation(summary = "Listar colaboradores")
     @GetMapping
