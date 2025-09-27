@@ -27,5 +27,16 @@ CREATE TABLE IF NOT EXISTS coffee_item (
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_item_per_day ON coffee_item (event_id, lower(item_name));
 
-ALTER TABLE collaborator
-  ADD CONSTRAINT IF NOT EXISTS ck_cpf_digits CHECK (cpf ~ '^[0-9]{11}$');
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+      FROM information_schema.table_constraints
+     WHERE constraint_name = 'ck_cpf_digits'
+       AND table_name      = 'collaborator'
+       AND constraint_type = 'CHECK'
+  ) THEN
+    ALTER TABLE collaborator
+      ADD CONSTRAINT ck_cpf_digits CHECK (cpf ~ '^[0-9]{11}$');
+  END IF;
+END$$;
