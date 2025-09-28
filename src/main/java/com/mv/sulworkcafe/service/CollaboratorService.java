@@ -49,10 +49,10 @@ public class CollaboratorService {
 
     @Transactional
     public void delete(long id) {
-        var deleted = nativeRepo.deleteByIdReturning(id);
-        if (deleted.isEmpty()) {
+        if (!jpaRepo.existsById(id)) {
             throw new NotFoundException("Colaborador não encontrado");
         }
+        jpaRepo.deleteById(id);
     }
 
     @Transactional(readOnly = true)
