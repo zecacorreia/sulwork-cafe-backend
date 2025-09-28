@@ -65,6 +65,7 @@ public class ItemService {
         return new CoffeeItemDTO(
                 i.getId(),
                 i.getEvent().getEventDate().toString(),
+                i.getCollaborator().getId(),
                 i.getCollaborator().getName(),
                 i.getCollaborator().getCpf(),
                 i.getItemName(),
