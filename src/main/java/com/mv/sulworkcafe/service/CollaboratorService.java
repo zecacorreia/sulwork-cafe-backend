@@ -60,4 +60,17 @@ public class CollaboratorService {
         return jpaRepo.findByCpf(cpf)
                 .orElseThrow(() -> new NotFoundException("Colaborador não encontrado para o CPF informado"));
     }
+
+    @Transactional
+    public Collaborator update(Long id, CollaboratorDTO dto) {
+        Collaborator existingCollaborator = jpaRepo.findById(id)
+                .orElseThrow(() -> new NotFoundException("Colaborador com ID " + id + " não encontrado."));
+
+        if (dto.name() == null || dto.name().isBlank()) {
+            throw new BusinessException("O nome não pode ser vazio.");
+        }
+        existingCollaborator.setName(dto.name().trim());
+
+        return jpaRepo.save(existingCollaborator);
+    }
 }

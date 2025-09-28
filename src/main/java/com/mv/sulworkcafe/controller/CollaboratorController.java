@@ -14,6 +14,7 @@ import java.util.List;
 @Tag(name = "Collaborators")
 @RestController
 @RequestMapping("/api/collaborators")
+@CrossOrigin(origins = "http://localhost:4200")
 public class CollaboratorController {
 
     private final CollaboratorService service;
@@ -25,12 +26,19 @@ public class CollaboratorController {
     @Operation(summary = "Cadastrar colaborador")
     @PostMapping
     public ResponseEntity<CollaboratorDTO> create(@Valid @RequestBody CollaboratorDTO dto) {
-        var saved = service.create(dto); 
+        var saved = service.create(dto);
         var body = new CollaboratorDTO(saved.getName(), saved.getCpf());
         return ResponseEntity.created(URI.create("/api/collaborators/" + saved.getId()))
                 .body(body);
     }
 
+    @Operation(summary = "Atualizar colaborador por ID")
+    @PutMapping("/{id}")
+    public ResponseEntity<CollaboratorDTO> update(@PathVariable("id") long id, @Valid @RequestBody CollaboratorDTO dto) {
+        var updated = service.update(id, dto);
+        var body = new CollaboratorDTO(updated.getName(), updated.getCpf());
+        return ResponseEntity.ok(body);
+    }
 
     @Operation(summary = "Listar colaboradores")
     @GetMapping
