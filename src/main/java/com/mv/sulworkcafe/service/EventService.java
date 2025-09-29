@@ -26,16 +26,20 @@ public class EventService {
         if (dto == null || dto.eventDate() == null) {
             throw new BusinessException("Data do evento é obrigatória");
         }
-        LocalDate d = dto.eventDate();
-        if (!d.isAfter(LocalDate.now())) {
+
+        LocalDate date = dto.eventDate();
+
+        // Regra: precisa ser estritamente maior que hoje
+        if (!date.isAfter(LocalDate.now())) {
             throw new BusinessException("A data do café deve ser maior que a data atual");
         }
-        if (jpaRepo.existsByEventDate(d)) {
+
+        if (jpaRepo.existsByEventDate(date)) {
             throw new BusinessException("Já existe um café nesta data");
         }
 
         CoffeeEvent entity = CoffeeEvent.builder()
-                .eventDate(d)
+                .eventDate(date)
                 .build();
 
         return jpaRepo.save(entity);
@@ -51,7 +55,10 @@ public class EventService {
 
     @Transactional(readOnly = true)
     public CoffeeEventDTO findByDate(LocalDate date) {
-        var e = jpaRepo.findByEventDate(date)
+        if (date == null) {
+            throw new BusinessException("Data do café é obrigatória");
+        }
+        CoffeeEvent e = jpaRepo.findByEventDate(date)
                 .orElseThrow(() -> new NotFoundException("Data do café não encontrada: " + date));
         return new CoffeeEventDTO(e.getEventDate());
     }
@@ -66,6 +73,9 @@ public class EventService {
 
     @Transactional(readOnly = true)
     public CoffeeEvent getEntityByDate(LocalDate date) {
+        if (date == null) {
+            throw new BusinessException("Data do café é obrigatória");
+        }
         return jpaRepo.findByEventDate(date)
                 .orElseThrow(() -> new NotFoundException("Data do café não encontrada: " + date));
     }

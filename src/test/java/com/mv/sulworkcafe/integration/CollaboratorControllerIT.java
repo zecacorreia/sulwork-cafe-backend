@@ -9,11 +9,11 @@ import com.mv.sulworkcafe.repository.nativequery.CollaboratorNativeRepositoryImp
 import com.mv.sulworkcafe.service.CollaboratorService;
 import com.mv.sulworkcafe.service.EventService;
 import com.mv.sulworkcafe.service.ItemService;
+import com.mv.sulworkcafe.service.ParticipantFacadeService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-// novo pacote substituto do antigo @MockBean
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -31,12 +31,11 @@ class CollaboratorControllerTest {
     @Autowired
     private MockMvc mvc;
 
-    // Services usados pelo controller (mockados)
     @MockitoBean private CollaboratorService collaboratorService;
     @MockitoBean private EventService eventService;
     @MockitoBean private ItemService itemService;
+    @MockitoBean private ParticipantFacadeService participantFacadeService;
 
-    // Repositórios nativos que usam EntityManager (mockados para não subir JPA no slice web)
     @MockitoBean private CoffeeItemNativeRepositoryImpl coffeeItemNativeRepositoryImpl;
     @MockitoBean private CoffeeEventNativeRepositoryImpl coffeeEventNativeRepositoryImpl;
     @MockitoBean private CollaboratorNativeRepositoryImpl collaboratorNativeRepositoryImpl;
@@ -58,7 +57,6 @@ class CollaboratorControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(header().string("Location", endsWith("/api/collaborators/1")))
                 .andExpect(content().contentTypeCompatibleWith(APPLICATION_JSON))
-                // o controller retorna apenas name e cpf no corpo
                 .andExpect(jsonPath("$.name").value("Fulano"))
                 .andExpect(jsonPath("$.cpf").value("06875931070"))
                 .andExpect(jsonPath("$.id").doesNotExist());

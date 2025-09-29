@@ -1,4 +1,14 @@
 spring:
+  mvc:
+    cors:
+      mappings:
+        "[/api/**]":
+          allowed-origins: "http://localhost:4200"
+          allowed-methods: "GET,POST,PUT,PATCH,DELETE,OPTIONS"
+          allowed-headers: "*"
+          exposed-headers: "Location"
+          allow-credentials: false
+          max-age: 3600
   config:
     import: optional:file:.env[.properties]
   datasource:

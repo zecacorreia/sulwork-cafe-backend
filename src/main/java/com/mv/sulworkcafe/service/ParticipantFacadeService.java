@@ -13,6 +13,7 @@ import com.mv.sulworkcafe.util.CpfValidator;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.Objects;
 
 @Service
@@ -34,49 +35,61 @@ public class ParticipantFacadeService {
     public ParticipantResponse createOrUpdateParticipantWithBreakfast(ParticipantUpsertRequest req) {
         if (req == null) throw new BusinessException("Payload obrigatório");
 
-        var name = (req.name() == null ? "" : req.name().trim());
+        var name = req.name() == null ? "" : req.name().trim();
         if (name.isBlank()) throw new BusinessException("Nome é obrigatório");
 
-        var cpf = CpfValidator.normalize(req.cpf());
+        var cpfRaw = req.cpf();
+        if (cpfRaw == null) throw new BusinessException("CPF é obrigatório");
+        var cpf = CpfValidator.normalize(cpfRaw);
         if (!CpfValidator.isValid(cpf)) throw new BusinessException("CPF inválido (11 dígitos)");
 
-        if (req.breakfastDate() == null) throw new BusinessException("Data do café é obrigatória");
-        if (req.items() == null || req.items().isEmpty()) throw new BusinessException("Informe ao menos um item");
+        LocalDate date = req.breakfastDate();
+        if (date == null) throw new BusinessException("Data do café é obrigatória");
 
-        // colaborador (cria ou atualiza nome)
+        if (req.items() == null || req.items().isEmpty())
+            throw new BusinessException("Informe ao menos um item");
+
+        var normalizedItems = req.items().stream()
+                .map(it -> {
+                    var n = (it == null || it.name() == null) ? "" : it.name().trim();
+                    if (n.isBlank()) throw new BusinessException("Item inválido");
+                    return new ItemPair(n, it.brought());
+                })
+                .toList();
+
         var collab = collaboratorRepo.findByCpf(cpf)
-                .orElseGet(() -> collaboratorRepo.save(Collaborator.builder().name(name).cpf(cpf).build()));
+                .orElseGet(() -> collaboratorRepo.save(
+                        Collaborator.builder().name(name).cpf(cpf).build()
+                ));
         if (!Objects.equals(name, collab.getName())) {
             collab.setName(name);
             collaboratorRepo.save(collab);
         }
 
-        var event = eventRepo.findByEventDate(req.breakfastDate())
-                .orElseGet(() -> eventRepo.save(CoffeeEvent.builder().eventDate(req.breakfastDate()).build()));
+        var event = eventRepo.findByEventDate(date)
+                .orElseGet(() -> eventRepo.save(
+                        CoffeeEvent.builder().eventDate(date).build()
+                ));
 
-        for (var it : req.items()) {
-            var itemName = it == null || it.name() == null ? "" : it.name().trim();
-            if (itemName.isBlank()) {
-                throw new BusinessException("Item inválido");
-            }
-            if (itemRepo.existsByEventAndNameIgnoreCase(event, itemName)) {
-                throw new BusinessException("Item '" + itemName + "' já escolhido para esta data");
+        for (var it : normalizedItems) {
+            if (itemRepo.existsByEventAndItemNameIgnoreCase(event, it.name())) {
+                throw new BusinessException("Item '" + it.name() + "' já escolhido para esta data");
             }
         }
 
-        // grava itens
-        for (var it : req.items()) {
-            itemRepo.save(
-                    CoffeeItem.builder()
-                            .itemName(it.name().trim())
-                            .brought(Boolean.TRUE.equals(it.brought()))
-                            .event(event)
-                            .collaborator(collab)
-                            .build()
-            );
-        }
+        var toSave = normalizedItems.stream()
+                .map(it -> CoffeeItem.builder()
+                        .itemName(it.name())
+                        .brought(Boolean.TRUE.equals(it.brought()))
+                        .event(event)
+                        .collaborator(collab)
+                        .build())
+                .toList();
+        itemRepo.saveAll(toSave);
 
-        var names = req.items().stream().map(i -> i.name().trim()).toList();
+        var names = toSave.stream().map(CoffeeItem::getItemName).toList();
         return new ParticipantResponse(collab.getId(), collab.getName(), collab.getCpf(), event.getEventDate(), names);
     }
+
+    private record ItemPair(String name, Boolean brought) {}
 }

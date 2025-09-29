@@ -7,6 +7,6 @@ import java.time.LocalDate;
 import java.util.Optional;
 
 public interface CoffeeEventRepository extends JpaRepository<CoffeeEvent, Long> {
-    Optional<CoffeeEvent> findByEventDate(LocalDate eventDate);
     boolean existsByEventDate(LocalDate eventDate);
+    Optional<CoffeeEvent> findByEventDate(LocalDate eventDate);
 }

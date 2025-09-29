@@ -10,6 +10,7 @@ import com.mv.sulworkcafe.repository.jpa.CoffeeEventRepository;
 import com.mv.sulworkcafe.repository.jpa.CoffeeItemRepository;
 import com.mv.sulworkcafe.repository.jpa.CollaboratorRepository;
 import com.mv.sulworkcafe.repository.nativequery.CoffeeItemNativeRepository;
+import com.mv.sulworkcafe.util.CpfValidator;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,17 +22,17 @@ public class ItemService {
 
     private final CoffeeEventRepository eventRepo;
     private final CollaboratorRepository collabRepo;
-    private final CoffeeItemNativeRepository nativeRepo;
     private final CoffeeItemRepository itemJpaRepo;
+    private final CoffeeItemNativeRepository nativeRepo;
 
     public ItemService(CoffeeEventRepository eventRepo,
                        CollaboratorRepository collabRepo,
-                       CoffeeItemNativeRepository nativeRepo,
-                       CoffeeItemRepository itemJpaRepo) {
+                       CoffeeItemRepository itemJpaRepo,
+                       CoffeeItemNativeRepository nativeRepo) {
         this.eventRepo = eventRepo;
         this.collabRepo = collabRepo;
-        this.nativeRepo = nativeRepo;
         this.itemJpaRepo = itemJpaRepo;
+        this.nativeRepo = nativeRepo;
     }
 
     @Transactional
@@ -40,23 +41,38 @@ public class ItemService {
         CoffeeEvent event = eventRepo.findByEventDate(date)
                 .orElseThrow(() -> new NotFoundException("Data do café não encontrada: " + date));
 
-        var collaborator = collabRepo.findByCpf(dto.cpf())
+        var cpf = CpfValidator.normalize(dto.cpf());
+        var collaborator = collabRepo.findByCpf(cpf)
                 .orElseThrow(() -> new NotFoundException("Colaborador não encontrado para o CPF informado"));
 
-        String itemName = dto.itemName().trim();
-        boolean itemExists = itemJpaRepo.existsByEventAndNameIgnoreCase(event, itemName);
-        if (itemExists) {
+        String itemName = dto.itemName() == null ? "" : dto.itemName().trim();
+        if (itemName.isBlank()) throw new BusinessException("Nome do item é obrigatório");
+
+        if (itemJpaRepo.existsByEventAndItemNameIgnoreCase(event, itemName)) {
             throw new BusinessException("O item '" + itemName + "' já foi escolhido para esta data.");
         }
 
-        CoffeeItem item = nativeRepo.insert(event.getId(), collaborator.getId(), itemName);
-        return toDTO(item);
+        CoffeeItem saved = itemJpaRepo.save(
+                CoffeeItem.builder()
+                        .event(event)
+                        .collaborator(collaborator)
+                        .itemName(itemName)
+                        .brought(false)
+                        .build()
+        );
+        return toDTO(saved);
     }
 
     @Transactional
     public CoffeeItemDTO mark(long id, Boolean brought) {
-        CoffeeItem updated = nativeRepo.mark(id, brought);
-        return toDTO(updated);
+        if (brought == null) brought = false;
+
+        var ci = itemJpaRepo.findById(id)
+                .orElseThrow(() -> new NotFoundException("Item não encontrado"));
+        ci.setBrought(brought);
+        var saved = itemJpaRepo.save(ci);
+
+        return toDTO(saved);
     }
 
     @Transactional(readOnly = true)
@@ -66,10 +82,10 @@ public class ItemService {
 
     @Transactional
     public void delete(long id) {
-        var deleted = nativeRepo.deleteByIdReturning(id);
-        if (deleted.isEmpty()) {
+        if (!itemJpaRepo.existsById(id)) {
             throw new NotFoundException("Item não encontrado");
         }
+        itemJpaRepo.deleteById(id);
     }
 
     private CoffeeItemDTO toDTO(CoffeeItem i) {
@@ -80,7 +96,7 @@ public class ItemService {
                 i.getCollaborator().getName(),
                 i.getCollaborator().getCpf(),
                 i.getItemName(),
-                i.getBrought()
+                Boolean.TRUE.equals(i.getBrought())
         );
     }
 }
