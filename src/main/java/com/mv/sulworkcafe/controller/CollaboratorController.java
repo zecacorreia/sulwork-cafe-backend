@@ -14,7 +14,7 @@ import java.util.List;
 @Tag(name = "Collaborators")
 @RestController
 @RequestMapping("/api/collaborators")
-@CrossOrigin(origins = "http://localhost:4200")
+@CrossOrigin(origins = "http://localhost:4200, https://sulwork-cafe-frontend-production.up.railway.app")
 public class CollaboratorController {
 
     private final CollaboratorService service;
