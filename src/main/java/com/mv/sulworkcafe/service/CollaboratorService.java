@@ -29,14 +29,21 @@ public class CollaboratorService {
         if (dto == null || dto.name() == null || dto.name().isBlank()) {
             throw new BusinessException("Nome é obrigatório");
         }
-        String cpf = dto.cpf();
-        if (!CpfValidator.isValid(cpf)) {
+
+        String normalizedCpf = CpfValidator.normalize(dto.cpf());
+        if (!CpfValidator.isValid(normalizedCpf)) {
             throw new BusinessException("CPF inválido (11 dígitos)");
         }
-        if (jpaRepo.findByCpf(cpf).isPresent()) {
+        if (jpaRepo.findByCpf(normalizedCpf).isPresent()) {
             throw new BusinessException("CPF já cadastrado");
         }
-        return nativeRepo.insert(dto.name().trim(), cpf);
+
+        Collaborator entity = Collaborator.builder()
+                .name(dto.name().trim())
+                .cpf(normalizedCpf)
+                .build();
+
+        return jpaRepo.save(entity);
     }
 
     @Transactional(readOnly = true)
@@ -57,7 +64,8 @@ public class CollaboratorService {
 
     @Transactional(readOnly = true)
     public Collaborator findEntityByCpf(String cpf) {
-        return jpaRepo.findByCpf(cpf)
+        String normalizedCpf = CpfValidator.normalize(cpf);
+        return jpaRepo.findByCpf(normalizedCpf)
                 .orElseThrow(() -> new NotFoundException("Colaborador não encontrado para o CPF informado"));
     }
 

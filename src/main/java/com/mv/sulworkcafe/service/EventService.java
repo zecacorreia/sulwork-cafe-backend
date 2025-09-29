@@ -5,7 +5,6 @@ import com.mv.sulworkcafe.entity.CoffeeEvent;
 import com.mv.sulworkcafe.exception.BusinessException;
 import com.mv.sulworkcafe.exception.NotFoundException;
 import com.mv.sulworkcafe.repository.jpa.CoffeeEventRepository;
-import com.mv.sulworkcafe.repository.nativequery.CoffeeEventNativeRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,12 +16,9 @@ import java.util.List;
 public class EventService {
 
     private final CoffeeEventRepository jpaRepo;
-    private final CoffeeEventNativeRepository nativeRepo;
 
-    public EventService(CoffeeEventRepository jpaRepo,
-                        CoffeeEventNativeRepository nativeRepo) {
+    public EventService(CoffeeEventRepository jpaRepo) {
         this.jpaRepo = jpaRepo;
-        this.nativeRepo = nativeRepo;
     }
 
     @Transactional
@@ -34,10 +30,15 @@ public class EventService {
         if (!d.isAfter(LocalDate.now())) {
             throw new BusinessException("A data do café deve ser maior que a data atual");
         }
-        if (jpaRepo.findByEventDate(d).isPresent()) {
+        if (jpaRepo.existsByEventDate(d)) {
             throw new BusinessException("Já existe um café nesta data");
         }
-        return nativeRepo.insert(d);
+
+        CoffeeEvent entity = CoffeeEvent.builder()
+                .eventDate(d)
+                .build();
+
+        return jpaRepo.save(entity);
     }
 
     @Transactional(readOnly = true)
