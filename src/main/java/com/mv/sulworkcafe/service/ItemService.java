@@ -4,8 +4,10 @@ import com.mv.sulworkcafe.dto.CoffeeItemCreateDTO;
 import com.mv.sulworkcafe.dto.CoffeeItemDTO;
 import com.mv.sulworkcafe.entity.CoffeeEvent;
 import com.mv.sulworkcafe.entity.CoffeeItem;
+import com.mv.sulworkcafe.exception.BusinessException;
 import com.mv.sulworkcafe.exception.NotFoundException;
 import com.mv.sulworkcafe.repository.jpa.CoffeeEventRepository;
+import com.mv.sulworkcafe.repository.jpa.CoffeeItemRepository;
 import com.mv.sulworkcafe.repository.jpa.CollaboratorRepository;
 import com.mv.sulworkcafe.repository.nativequery.CoffeeItemNativeRepository;
 import org.springframework.stereotype.Service;
@@ -20,13 +22,16 @@ public class ItemService {
     private final CoffeeEventRepository eventRepo;
     private final CollaboratorRepository collabRepo;
     private final CoffeeItemNativeRepository nativeRepo;
+    private final CoffeeItemRepository itemJpaRepo;
 
     public ItemService(CoffeeEventRepository eventRepo,
                        CollaboratorRepository collabRepo,
-                       CoffeeItemNativeRepository nativeRepo) {
+                       CoffeeItemNativeRepository nativeRepo,
+                       CoffeeItemRepository itemJpaRepo) {
         this.eventRepo = eventRepo;
         this.collabRepo = collabRepo;
         this.nativeRepo = nativeRepo;
+        this.itemJpaRepo = itemJpaRepo;
     }
 
     @Transactional
@@ -38,7 +43,13 @@ public class ItemService {
         var collaborator = collabRepo.findByCpf(dto.cpf())
                 .orElseThrow(() -> new NotFoundException("Colaborador não encontrado para o CPF informado"));
 
-        CoffeeItem item = nativeRepo.insert(event.getId(), collaborator.getId(), dto.itemName().trim());
+        String itemName = dto.itemName().trim();
+        boolean itemExists = itemJpaRepo.existsByEventAndItemNameIgnoreCase(event, itemName);
+        if (itemExists) {
+            throw new BusinessException("O item '" + itemName + "' já foi escolhido para esta data.");
+        }
+
+        CoffeeItem item = nativeRepo.insert(event.getId(), collaborator.getId(), itemName);
         return toDTO(item);
     }
 
