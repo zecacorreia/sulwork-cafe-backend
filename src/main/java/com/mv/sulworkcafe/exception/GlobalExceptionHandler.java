@@ -66,7 +66,7 @@ public class GlobalExceptionHandler {
         pd.setProperty("errors", errors);
         return pd;
     }
-    
+
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ProblemDetail handleNotReadable(HttpMessageNotReadableException ex, HttpServletRequest req) {
         return problem(HttpStatus.BAD_REQUEST, "Corpo de requisição inválido",
