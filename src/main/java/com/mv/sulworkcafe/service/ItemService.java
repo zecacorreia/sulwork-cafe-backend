@@ -44,7 +44,7 @@ public class ItemService {
                 .orElseThrow(() -> new NotFoundException("Colaborador não encontrado para o CPF informado"));
 
         String itemName = dto.itemName().trim();
-        boolean itemExists = itemJpaRepo.existsByEventAndItemNameIgnoreCase(event, itemName);
+        boolean itemExists = itemJpaRepo.existsByEventAndNameIgnoreCase(event, itemName);
         if (itemExists) {
             throw new BusinessException("O item '" + itemName + "' já foi escolhido para esta data.");
         }

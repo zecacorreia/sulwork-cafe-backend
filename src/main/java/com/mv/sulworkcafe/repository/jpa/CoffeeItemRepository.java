@@ -10,5 +10,5 @@ import java.util.List;
 public interface CoffeeItemRepository extends JpaRepository<CoffeeItem, Long> {
     @Query("SELECT i FROM CoffeeItem i JOIN FETCH i.collaborator WHERE i.event.eventDate = :date")
     List<CoffeeItem> findByEventDateWithCollaborator(@Param("date") String date);
-    boolean existsByEventAndItemNameIgnoreCase(CoffeeEvent event, String itemName);
+    boolean existsByEventAndNameIgnoreCase(CoffeeEvent event, String name);
 }
