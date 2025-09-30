@@ -26,7 +26,7 @@ public class CollaboratorService {
 
     @Transactional
     public Collaborator create(CollaboratorDTO dto) {
-        if (dto == null || dto.name() == null || dto.name().isBlank()) {
+        if (dto == null || dto.name() == null || dto.name().trim().isEmpty()) {
             throw new BusinessException("Nome é obrigatório");
         }
 

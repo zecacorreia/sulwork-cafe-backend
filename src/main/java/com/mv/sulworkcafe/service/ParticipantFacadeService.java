@@ -46,6 +46,10 @@ public class ParticipantFacadeService {
         LocalDate date = req.breakfastDate();
         if (date == null) throw new BusinessException("Data do café é obrigatória");
 
+        if (!date.isAfter(LocalDate.now())) {
+            throw new BusinessException("A data do café deve ser maior que a data atual");
+        }
+
         if (req.items() == null || req.items().isEmpty())
             throw new BusinessException("Informe ao menos um item");
 
@@ -57,14 +61,18 @@ public class ParticipantFacadeService {
                 })
                 .toList();
 
-        var collab = collaboratorRepo.findByCpf(cpf)
-                .orElseGet(() -> collaboratorRepo.save(
-                        Collaborator.builder().name(name).cpf(cpf).build()
-                ));
-        if (!Objects.equals(name, collab.getName())) {
-            collab.setName(name);
-            collaboratorRepo.save(collab);
+        var seen = new java.util.TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
+        for (var it : normalizedItems) {
+            if (!seen.add(it.name())) {
+                throw new BusinessException("Item duplicado no envio: '" + it.name() + "'");
+            }
         }
+
+        if (collaboratorRepo.existsByCpf(cpf)) {
+            throw new BusinessException("Já existe colaborador com este CPF");
+        }
+
+        var collab = collaboratorRepo.save(Collaborator.builder().name(name).cpf(cpf).build());
 
         var event = eventRepo.findByEventDate(date)
                 .orElseGet(() -> eventRepo.save(

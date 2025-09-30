@@ -10,7 +10,8 @@ public final class CpfValidator {
     }
 
     public static boolean isValid(String cpf) {
-        String normalized = normalize(cpf);
-        return normalized.length() == 11;
+        String n = normalize(cpf);
+        if (n.length() != 11) return false;
+        return !n.matches("(\\d)\\1{10}");
     }
 }
