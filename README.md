@@ -61,11 +61,3 @@ O ambiente de desenvolvimento do backend é 100% containerizado com Docker Compo
 Com o backend rodando, a documentação interativa da API (gerada pelo SpringDoc) pode ser acessada através do Swagger UI no seguinte endereço:
 
 [http://localhost:8080/swagger](http://localhost:8080/swagger)
-
----
----
-
-# ==========================================================
-# Arquivo: frontend/README.md
-# ==========================================================
-
