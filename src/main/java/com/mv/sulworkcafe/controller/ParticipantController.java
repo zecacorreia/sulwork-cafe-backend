@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Participants")
 @RestController
 @RequestMapping("/api/participants")
-@CrossOrigin(origins = "http://localhost:4200, https://sulwork-cafe-frontend-production.up.railway.app")
+@CrossOrigin(origins = "http://localhost:4000, https://sulwork-cafe-frontend-production.up.railway.app")
 public class ParticipantController {
 
     private final ParticipantFacadeService service;
